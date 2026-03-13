@@ -1,27 +1,50 @@
 {
-  "name": "aether-agent",
+  "name": "@aether/agent",
   "version": "0.1.0",
-  "description": "Aether Agent — verified local automation for AetherAutomate",
+  "description": "Aether Agent — verified local file automation for AetherAutomate",
   "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/MerlinTheUnwise/AetherAgent.git"
+  },
   "bin": {
     "aether-agent": "./dist/index.js"
   },
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "scripts": {
     "build": "tsc",
+    "build:win": "npx pkg dist/index.js --target node18-win-x64 --output dist/binaries/AetherAgent.exe --compress GZip",
+    "build:mac": "npx pkg dist/index.js --target node18-macos-x64 --output dist/binaries/AetherAgent-mac --compress GZip",
+    "build:linux": "npx pkg dist/index.js --target node18-linux-x64 --output dist/binaries/aether-agent-linux --compress GZip",
+    "build:all": "npm run build && npm run build:win && npm run build:mac && npm run build:linux",
     "dev": "tsx watch src/index.ts",
-    "start": "node dist/index.js"
+    "start": "node dist/index.js",
+    "test": "vitest run"
+  },
+  "pkg": {
+    "assets": [],
+    "outputPath": "dist/binaries"
   },
   "dependencies": {
-    "ws": "^8.16.0",
     "chalk": "^5.3.0",
     "commander": "^12.0.0",
-    "open": "^10.0.0"
+    "node-notifier": "^10.0.1",
+    "open": "^10.0.0",
+    "systray2": "^2.1.4",
+    "ws": "^8.16.0"
   },
   "devDependencies": {
-    "@types/ws": "^8.5.0",
     "@types/node": "^20.0.0",
+    "@types/node-notifier": "^8.0.5",
+    "@types/ws": "^8.5.0",
+    "@yao-pkg/pkg": "^6.14.1",
     "tsx": "^4.7.0",
-    "typescript": "^5.3.0"
+    "typescript": "^5.3.0",
+    "vitest": "^4.1.0"
   },
   "engines": {
     "node": ">=18.0.0"
