@@ -5,7 +5,7 @@ const CURRENT_VERSION = "0.1.0";
 
 export async function checkForUpdate(): Promise<void> {
   try {
-    const response = await fetch("https://registry.npmjs.org/@aether/agent/latest");
+    const response = await fetch("https://registry.npmjs.org/@withaether/agent/latest");
     if (!response.ok) return;
     const data = await response.json() as { version?: string };
     const latest = data.version;
@@ -16,7 +16,7 @@ export async function checkForUpdate(): Promise<void> {
     if (latest !== current) {
       console.log();
       console.log(chalk.yellow(`  Update available: ${current} \u2192 ${latest}`));
-      console.log(chalk.gray("  Run: npm install -g @aether/agent"));
+      console.log(chalk.gray("  Run: npm install -g @withaether/agent"));
       console.log();
     }
   } catch {
