@@ -1,8 +1,3 @@
-import SysTrayModule from "systray2";
-import type { ClickEvent, Menu, Conf } from "systray2";
-
-// systray2 is CJS — handle ESM interop
-const SysTray = (SysTrayModule as any).default ?? SysTrayModule;
 import { exec } from "node:child_process";
 import os from "node:os";
 
@@ -42,6 +37,7 @@ let systray: any = null;
 let currentState: TrayState = "connecting";
 let callbacks: TrayCallbacks | null = null;
 let isPaused = false;
+let trayAvailable = false;
 
 function createColorIcon(r: number, g: number, b: number): string {
   const width = 16;
@@ -89,7 +85,7 @@ function createColorIcon(r: number, g: number, b: number): string {
 
 const SEPARATOR = { title: "---", tooltip: "", enabled: false };
 
-function buildMenu(): Menu {
+function buildMenu(): any {
   const perms = loadPermissions();
   const folderCount = perms.length;
   const hostname = os.hostname();
@@ -135,38 +131,52 @@ function buildMenu(): Menu {
   };
 }
 
-export function startTray(cbs: TrayCallbacks): void {
+export async function startTray(cbs: TrayCallbacks): Promise<void> {
   callbacks = cbs;
 
-  systray = new (SysTray as any)({
-    menu: buildMenu(),
-    debug: false,
-    copyDir: false,
-  });
+  try {
+    const SysTrayModule = await import("systray2");
+    const SysTray = (SysTrayModule as any).default ?? SysTrayModule;
 
-  systray.onClick((action: ClickEvent) => {
-    switch (action.seq_id) {
-      case 3: // Shared Folders
-        callbacks?.onOpenFolders();
-        break;
-      case 4: // Open Dashboard
-        openUrl(WEB_URL);
-        break;
-      case 6: // Pause/Resume
-        if (isPaused) {
-          isPaused = false;
-          callbacks?.onResume();
-        } else {
-          isPaused = true;
-          callbacks?.onPause();
-        }
-        updateTray();
-        break;
-      case 7: // Quit
-        callbacks?.onQuit();
-        break;
-    }
-  });
+    systray = new (SysTray as any)({
+      menu: buildMenu(),
+      debug: false,
+      copyDir: false,
+    });
+
+    systray.onClick((action: any) => {
+      switch (action.seq_id) {
+        case 3: // Shared Folders
+          callbacks?.onOpenFolders();
+          break;
+        case 4: // Open Dashboard
+          openUrl(WEB_URL);
+          break;
+        case 6: // Pause/Resume
+          if (isPaused) {
+            isPaused = false;
+            callbacks?.onResume();
+          } else {
+            isPaused = true;
+            callbacks?.onPause();
+          }
+          updateTray();
+          break;
+        case 7: // Quit
+          callbacks?.onQuit();
+          break;
+      }
+    });
+
+    trayAvailable = true;
+  } catch {
+    trayAvailable = false;
+  }
+
+  if (!trayAvailable) {
+    console.log("  Running in console mode (system tray not available in this build)");
+    console.log("  The agent is connected and working. Press Ctrl+C to stop.");
+  }
 }
 
 export function updateTrayState(state: TrayState): void {

@@ -1,5 +1,21 @@
 #!/usr/bin/env node
 
+// Global safety net — catch native module crashes so the exe never dies unexpectedly
+process.on("uncaughtException", (err) => {
+  const msg = err.message || "";
+  if (msg.includes("systray") || msg.includes("tray") || msg.includes("ENOENT") || msg.includes("node-notifier") || msg.includes("keytar")) {
+    console.log("  (A background feature isn't available in this build — non-critical)");
+  } else {
+    console.error("Unexpected error:", err.message);
+    console.error("Please report this at github.com/MerlinTheUnwise/AetherAgent/issues");
+    process.exit(1);
+  }
+});
+
+process.on("unhandledRejection", (err: any) => {
+  console.error("Unexpected error:", err?.message || err);
+});
+
 import { Command } from "commander";
 import chalk from "chalk";
 import { login, logout, getToken } from "./auth.js";
@@ -19,7 +35,7 @@ async function tryStartTray(cbs: {
 }): Promise<boolean> {
   try {
     const { startTray } = await import("./tray.js");
-    startTray(cbs);
+    await startTray(cbs);
     return true;
   } catch {
     console.log("  (System tray not available — running in console mode)");

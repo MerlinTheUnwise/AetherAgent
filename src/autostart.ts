@@ -21,12 +21,13 @@ function getAgentBin(): string {
   }
 }
 
-export async function enableAutoStart(): Promise<void> {
-  const platform = process.platform;
-  const agentBin = getAgentBin();
+export async function enableAutoStart(): Promise<boolean> {
+  try {
+    const platform = process.platform;
+    const agentBin = getAgentBin();
 
-  if (platform === "darwin") {
-    const plist = `<?xml version="1.0" encoding="UTF-8"?>
+    if (platform === "darwin") {
+      const plist = `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
@@ -42,30 +43,36 @@ export async function enableAutoStart(): Promise<void> {
   <key>KeepAlive</key><true/>
 </dict>
 </plist>`;
-    const launchAgentsDir = path.join(os.homedir(), "Library", "LaunchAgents");
-    fs.mkdirSync(launchAgentsDir, { recursive: true });
-    fs.writeFileSync(path.join(launchAgentsDir, "com.aether.agent.plist"), plist, "utf-8");
-  }
+      const launchAgentsDir = path.join(os.homedir(), "Library", "LaunchAgents");
+      fs.mkdirSync(launchAgentsDir, { recursive: true });
+      fs.writeFileSync(path.join(launchAgentsDir, "com.aether.agent.plist"), plist, "utf-8");
+    }
 
-  if (platform === "win32") {
-    const cmd = `reg add "${REGISTRY_KEY}" /v "${REGISTRY_VALUE}" /t REG_SZ /d "\\"${agentBin}\\" start --background" /f`;
-    execSync(cmd, { stdio: "ignore" });
-  }
+    if (platform === "win32") {
+      const cmd = `reg add "${REGISTRY_KEY}" /v "${REGISTRY_VALUE}" /t REG_SZ /d "\\"${agentBin}\\" start --background" /f`;
+      execSync(cmd, { stdio: "ignore" });
+    }
 
-  if (platform === "linux") {
-    const desktop = `[Desktop Entry]
+    if (platform === "linux") {
+      const desktop = `[Desktop Entry]
 Type=Application
 Name=Aether Agent
 Exec=${agentBin} start --background
 Hidden=false
 NoDisplay=false
 X-GNOME-Autostart-enabled=true`;
-    const autoStartDir = path.join(os.homedir(), ".config", "autostart");
-    fs.mkdirSync(autoStartDir, { recursive: true });
-    fs.writeFileSync(path.join(autoStartDir, "aether-agent.desktop"), desktop, "utf-8");
-  }
+      const autoStartDir = path.join(os.homedir(), ".config", "autostart");
+      fs.mkdirSync(autoStartDir, { recursive: true });
+      fs.writeFileSync(path.join(autoStartDir, "aether-agent.desktop"), desktop, "utf-8");
+    }
 
-  console.log(chalk.green("\u2713 Aether Agent will start automatically on login."));
+    console.log(chalk.green("\u2713 Aether Agent will start automatically on login."));
+    return true;
+  } catch (err) {
+    console.log("  Could not set up auto-start:", (err as Error).message);
+    console.log("  You can start the agent manually anytime.");
+    return false;
+  }
 }
 
 export async function disableAutoStart(): Promise<void> {

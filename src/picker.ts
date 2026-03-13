@@ -1,6 +1,7 @@
 import http from "node:http";
 import os from "node:os";
 import path from "node:path";
+import readline from "node:readline";
 import { exec } from "node:child_process";
 
 function openUrl(url: string): void {
@@ -8,6 +9,16 @@ function openUrl(url: string): void {
     : process.platform === "darwin" ? `open "${url}"`
     : `xdg-open "${url}"`;
   exec(cmd, () => {});
+}
+
+async function promptForPath(): Promise<string | null> {
+  const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+  const answer = await new Promise<string>((resolve) => {
+    rl.question("  Enter folder path (or press Enter to skip): ", resolve);
+  });
+  rl.close();
+  const trimmed = answer.trim();
+  return trimmed || null;
 }
 
 export async function pickFolderGui(): Promise<string | null> {
@@ -18,7 +29,8 @@ export async function pickFolderGui(): Promise<string | null> {
     Downloads: path.join(home, "Downloads"),
   };
 
-  return new Promise<string | null>((resolve) => {
+  try {
+  return await new Promise<string | null>((resolve, reject) => {
     const server = http.createServer((req, res) => {
       if (req.url === "/") {
         res.writeHead(200, { "Content-Type": "text/html" });
@@ -100,10 +112,16 @@ export async function pickFolderGui(): Promise<string | null> {
       }
     });
 
+    server.on("error", () => reject(new Error("Server failed to start")));
+
     // Timeout after 60 seconds
     setTimeout(() => {
       server.close();
       resolve(null);
     }, 60_000);
   });
+  } catch {
+    console.log("  Folder picker couldn't open. Enter a path manually:");
+    return await promptForPath();
+  }
 }
