@@ -3,8 +3,15 @@ import type { ClickEvent, Menu, Conf } from "systray2";
 
 // systray2 is CJS — handle ESM interop
 const SysTray = (SysTrayModule as any).default ?? SysTrayModule;
-import open from "open";
+import { exec } from "node:child_process";
 import os from "node:os";
+
+function openUrl(url: string): void {
+  const cmd = process.platform === "win32" ? `start "" "${url}"`
+    : process.platform === "darwin" ? `open "${url}"`
+    : `xdg-open "${url}"`;
+  exec(cmd, () => {});
+}
 import { WEB_URL } from "./config.js";
 import { loadPermissions } from "./permissions.js";
 
@@ -143,7 +150,7 @@ export function startTray(cbs: TrayCallbacks): void {
         callbacks?.onOpenFolders();
         break;
       case 4: // Open Dashboard
-        open(WEB_URL);
+        openUrl(WEB_URL);
         break;
       case 6: // Pause/Resume
         if (isPaused) {

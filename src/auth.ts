@@ -1,7 +1,14 @@
 import fs from "node:fs";
 import path from "node:path";
-import open from "open";
+import { exec } from "node:child_process";
 import chalk from "chalk";
+
+function openUrl(url: string): void {
+  const cmd = process.platform === "win32" ? `start "" "${url}"`
+    : process.platform === "darwin" ? `open "${url}"`
+    : `xdg-open "${url}"`;
+  exec(cmd, () => {});
+}
 import { CONFIG_DIR, CREDENTIALS_FILE, API_URL, WEB_URL } from "./config.js";
 
 interface Credentials {
@@ -78,7 +85,7 @@ export async function login(): Promise<void> {
     console.log("Opening your browser to authorize...");
 
     const authUrl = `${WEB_URL}/agent/authorize?code=${deviceCode}`;
-    await open(authUrl);
+    openUrl(authUrl);
 
     console.log(chalk.gray(`If the browser didn't open, go to: ${authUrl}`));
     console.log();

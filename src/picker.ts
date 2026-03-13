@@ -1,5 +1,12 @@
 import http from "node:http";
-import open from "open";
+import { exec } from "node:child_process";
+
+function openUrl(url: string): void {
+  const cmd = process.platform === "win32" ? `start "" "${url}"`
+    : process.platform === "darwin" ? `open "${url}"`
+    : `xdg-open "${url}"`;
+  exec(cmd, () => {});
+}
 
 export async function pickFolderGui(): Promise<string | null> {
   let selectedFolder: string | null = null;
@@ -56,7 +63,7 @@ export async function pickFolderGui(): Promise<string | null> {
       if (addr && typeof addr === "object") {
         const port = addr.port;
         console.log(`Opening folder picker at http://localhost:${port}`);
-        open(`http://localhost:${port}`);
+        openUrl(`http://localhost:${port}`);
       }
     });
 
