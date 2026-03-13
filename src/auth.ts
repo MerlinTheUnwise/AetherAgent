@@ -84,7 +84,7 @@ export async function login(): Promise<void> {
     console.log();
     console.log("Opening your browser to authorize...");
 
-    const authUrl = `${WEB_URL}/agent/authorize?code=${deviceCode}`;
+    const authUrl = `${WEB_URL}/agent/auth?code=${deviceCode}`;
     openUrl(authUrl);
 
     console.log(chalk.gray(`If the browser didn't open, go to: ${authUrl}`));
